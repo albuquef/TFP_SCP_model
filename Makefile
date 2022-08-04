@@ -52,18 +52,37 @@ SRCDIR = ./src
 
 all: make run 
 run: run_mip 
+run2: run_mip_decomp 
 
-#fegsCP: ./main.cpp
-#	$(CCC) $(CCFLAGS) $(CCLNDIRS) -o $@ $<  $(CCLNFLAGS)
+run_cycle: run_mip_cycle
 
+# ------------------------------------------------------------
 fegs: fegs.o
 	$(CCC) $(CCFLAGS) $(CCLNDIRS) -o $(SRCDIR)/fegs $(SRCDIR)/fegs.o $(CCLNFLAGS)
 
+fegs_decomp: fegs_decomp.o
+	$(CCC) $(CCFLAGS) $(CCLNDIRS) -o $(SRCDIR)/fegs_decomp $(SRCDIR)/fegs_decomp.o $(CCLNFLAGS)
+
+fegs_cycle: fegs_cycle.o
+	$(CCC) $(CCFLAGS) $(CCLNDIRS) -o $(SRCDIR)/fegs_cycle $(SRCDIR)/fegs_cycle.o $(CCLNFLAGS)
+# ------------------------------------------------------------
 fegs.o: $(SRCDIR)/fegs.cpp
 	$(CCC) -c $(CCFLAGS) $(SRCDIR)/fegs.cpp -o $(SRCDIR)/fegs.o
 
+fegs_decomp.o: $(SRCDIR)/fegs_decomp.cpp
+	$(CCC) -c $(CCFLAGS) $(SRCDIR)/fegs_decomp.cpp -o $(SRCDIR)/fegs_decomp.o
+
+fegs_cycle.o: $(SRCDIR)/fegs_cycle.cpp
+	$(CCC) -c $(CCFLAGS) $(SRCDIR)/fegs_cycle.cpp -o $(SRCDIR)/fegs_cycle.o
+# ------------------------------------------------------------
 run_mip: fegs 
 	$(SRCDIR)/fegs
 
+run_mip_decomp: fegs_decomp 
+	$(SRCDIR)/fegs_decomp
+
+run_mip_cycle: fegs_cycle 
+	$(SRCDIR)/fegs_cycle
+# ------------------------------------------------------------
 clean:
-	rm -rf *.o $(SRCDIR)/*.o *~ $(SRCDIR)/fegs $(SRCDIR)/main #excluir o binario fegsCP
+	rm -rf *.o $(SRCDIR)/*.o *~ $(SRCDIR)/fegs $(SRCDIR)/fegs_decomp $(SRCDIR)/fegs_cycle  #excluir o binario fegsCP
