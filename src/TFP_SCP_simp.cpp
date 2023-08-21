@@ -297,74 +297,72 @@ void TFP_SCP_SIMP::create_GraphSPP_ILP(){
 
     if (strcmp(rd->G_type,"directed") == 0){
 
-        // int G_aux[]
+        int G_aux[rd->num_vertices][rd->num_vertices];
 
-        // for(int u=0; u<rd->num_vertices;u++)
-        //     for(int v=0; v<rd->num_vertices; v++){
-        //         if(rd->G[u][v] == 0){
+        for(int u=0; u<rd->num_vertices;u++)
+            for(int v=0; v<rd->num_vertices; v++){
+                if(rd->G[u][v] == 0){
 
-        //             IloEnv env_SPP;
-        //             try{
-        //                 IloModel model_SPP(env_SPP);
+                    IloEnv env_SPP;
+                    try{
+                        IloModel model_SPP(env_SPP);
                         
-        //                 BoolVarMatrix f(env_SPP,rd->num_vertices);
-        //                 IloIntVar lambda(env_SPP);
-        //                 if(strcmp(method_SPP,"MTZ") == 0){
-        //                     IloNumVarArray pi(env_SPP, rd->num_vertices,0,rd->num_vertices, ILOFLOAT);
-        //                     allocVars_SPP(env_SPP,f);
-        //                     createModel_MTZ(model_SPP,f,lambda,pi,u,v);       // can optmize var f, put all dif u,v = zero or better use 2 indices, only pq
-        //                 }
-        //                 if(strcmp(method_SPP,"SIGN") == 0){
-        //                     IloBoolVarArray mu(env_SPP,rd->num_vertices);
-        //                     allocVars_SPP(env_SPP,f);
-        //                     createModel_SIGN(model_SPP,f,lambda,mu,u,v);
-        //                 }
+                        BoolVarMatrix f(env_SPP,rd->num_vertices);
+                        IloIntVar lambda(env_SPP);
+                        if(strcmp(method_SPP,"MTZ") == 0){
+                            IloNumVarArray pi(env_SPP, rd->num_vertices,0,rd->num_vertices, ILOFLOAT);
+                            allocVars_SPP(env_SPP,f);
+                            createModel_MTZ(model_SPP,f,lambda,pi,u,v);       // can optmize var f, put all dif u,v = zero or better use 2 indices, only pq
+                        }
+                        if(strcmp(method_SPP,"SIGN") == 0){
+                            IloBoolVarArray mu(env_SPP,rd->num_vertices);
+                            allocVars_SPP(env_SPP,f);
+                            createModel_SIGN(model_SPP,f,lambda,mu,u,v);
+                        }
                         
-        //                 IloCplex cplex_spp;
-        //                 cplex_spp = IloCplex(model_SPP);
-        //                 cplex_spp.setOut(env_SPP.getNullStream());
+                        IloCplex cplex_spp;
+                        cplex_spp = IloCplex(model_SPP);
+                        cplex_spp.setOut(env_SPP.getNullStream());
                         
-        //                 if (!cplex_spp.solve()){
-        //                     // infeasible -> infinite
-        //                     GRAPH.Graph_SPP[u][v] = INF; 
-        //                     throw(-1);
-        //                 }
+                        if (!cplex_spp.solve()){
+                            // infeasible -> infinite
+                            G_aux[u][v] = INF; 
+                            throw(-1);
+                        }
 
 
-        //                 GRAPH.Graph_SPP[u][v] = int(cplex_spp.getObjValue());
+                        G_aux[u][v] = int(cplex_spp.getObjValue());
 
-        //                 // cout << "-------------------------------------------------- \n\n" << endl;
-        //             }catch (IloException& e) {
-        //                     cerr << "Concert exception caught: " << e << endl;
-        //                 }
-        //                 catch (...) {
-        //                     // cerr << "Unknown exception caught" << endl;
-        //                 }
+                        // cout << "-------------------------------------------------- \n\n" << endl;
+                    }catch (IloException& e) {
+                            cerr << "Concert exception caught: " << e << endl;
+                        }
+                        catch (...) {
+                            // cerr << "Unknown exception caught" << endl;
+                        }
 
-        //             env_SPP.end();
-
-
-        //         }if(rd->G[u][v] == 1){
-        //             GRAPH.Graph_SPP[u][v] = 1;
-        //         }if(rd->G[u][v] == -1){
-        //             // incompatible -> infinite
-        //             GRAPH.Graph_SPP[u][v] = INF;
-        //         }
-
-        //     }
-
-        // // for(int u=0; u<rd->num_vertices;u++)
-        // //     for(int v=u+1; v<rd->num_vertices; v++){
-            
+                    env_SPP.end();
 
 
+                }if(rd->G[u][v] == 1){
+                    G_aux[u][v] = 1;
+                }if(rd->G[u][v] == -1){
+                    // incompatible -> infinite
+                    G_aux[u][v] = INF;
+                }
 
+            }
 
+        for(int u=0; u<rd->num_vertices;u++)
+            for(int v=u+1; v<rd->num_vertices; v++){
+                if(G_aux[u][v] < INF && G_aux[v][u] < INF){
 
-        // // }
+                    GRAPH.Graph_SPP[u][v]=min(G_aux[u][v], G_aux[u][v]);
+
+                }
+            }
     
-    }
-    else{
+    }else{
         for(int u=0; u<rd->num_vertices;u++)
             for(int v=u+1; v<rd->num_vertices; v++){
                 if(rd->G[u][v] == 0){
@@ -662,6 +660,8 @@ void TFP_SCP_SIMP::saveResults(double timeTotal){
     char arq[1000];
     // sprintf(arq, "%s/results/%d_Vertices_2022-06-27_cycle_mtz.ods",CURRENT_DIR, rd->num_vertices);
     sprintf(arq, "%s/results/result_%d_Vertices_%d-%d-%d_TFP_SCP_SIMP_%s.ods",CURRENT_DIR, rd->num_vertices, current_year, current_month, current_day,method_SPP);
+    if (rd->G_type == "directed")
+        sprintf(arq, "%s/results/result_%d_Vertices_directed_%d-%d-%d_TFP_SCP_SIMP_%s.ods",CURRENT_DIR, rd->num_vertices, current_year, current_month, current_day,method_SPP);
 
     cout << arq << endl;
 
