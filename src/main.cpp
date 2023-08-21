@@ -101,8 +101,6 @@ int main(int argc, char** argv){
     // Reader rd(false,n, gclass,ctype, instType);
 
     Reader rd(false,n, gclass,ctype, instType,"directed");
-    rd.show();
-    exit(-1);
     // Reader rd(false,14, 1,1, "random");
     // rd.show();
     Graph GRAPH = Graph(rd.G, rd.num_vertices, rd.G_type);
