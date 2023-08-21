@@ -9,12 +9,17 @@ LIBFORMAT  = static_pic
 #
 #------------------------------------------------------------
 #CPLEXDIR      = /opt/ibm/ILOG/CPLEX_Studio129/cplex/
-#CONCERTDIR    = /opt/ibm/ILOG/CPLEX_Studio129/concert/]
+#CONCERTDIR    = /opt/ibm/ILOG/CPLEX_Studio129/concert/
 
-CPLEXDIR      = /opt/ibm/ILOG/CPLEX_Studio201/cplex
-CONCERTDIR    = /opt/ibm/ILOG/CPLEX_Studio201/concert
+# CPLEXDIR      = /opt/ibm/ILOG/CPLEX_Studio201/cplex
+# CONCERTDIR    = /opt/ibm/ILOG/CPLEX_Studio201/concert
+# CPCPLEXDIR      = /opt/ibm/ILOG/CPLEX_Studio201/cpoptimizer
 
-CPCPLEXDIR      = /opt/ibm/ILOG/CPLEX_Studio201/cpoptimizer
+
+CPLEXDIR      = /opt/ibm/ILOG/CPLEX_Studio2211/cplex
+CONCERTDIR    = /opt/ibm/ILOG/CPLEX_Studio2211/concert
+CPCPLEXDIR      = /opt/ibm/ILOG/CPLEX_Studio2211/cpoptimizer
+
 # ---------------------------------------------------------------------
 # Compiler selection 
 # ---------------------------------------------------------------------
@@ -32,7 +37,7 @@ CPLEXLIBDIR = $(CPLEXDIR)/lib/$(SYSTEM)/$(LIBFORMAT)
 CONCERTLIBDIR = $(CONCERTDIR)/lib/$(SYSTEM)/$(LIBFORMAT)
 
 CCLNDIRS  = -L$(CPLEXLIBDIR) -L$(CONCERTLIBDIR) 
-CCLNFLAGS = -lconcert -lilocplex -lcplex -lm -lpthread -ldl #-framework CoreFoundation -framework IOKit 
+CCLNFLAGS = -lconcert -lilocplex -lcplex -lm -lpthread -ldl  #-framework CoreFoundation -framework IOKit 
 
 
 CPCPLEXBINDIR = $(CPCPLEXDIR)/bin/$(BINDIST)
@@ -43,46 +48,110 @@ CPCCLNDIRS  = -L$(CPCPLEXLIBDIR) -L$(CPCONCERTLIBDIR)
 CONCERTINCDIR = $(CONCERTDIR)/include
 CPLEXINCDIR = $(CPLEXDIR)/include
 
-CPCPLEXINCDIR = $(CPCPLEXDIR)/include
+CPCPLEXINCDIR = $(CPCPLEXDIR)/includerun_SPC
 
 CCFLAGS = $(CCOPT) -I$(CPLEXINCDIR) -I$(CONCERTINCDIR) 
 # ------------------------------------------------------------
 SRCDIR = ./src
 # ------------------------------------------------------------
+DEFAULT = arg1
+DEPS = teste.o main.o
+OBJ = teste.o main.o
 
-all: make run 
-run: run_mip 
-run2: run_mip_decomp 
+# all: run1 run2 run3
+test: main
+# runTest: main
+# all: run1 run2 run3 
+# run1: run_SPC 
+# run2: run_SPC_simplified 
+# run3: run_SIPC 
 
-run_cycle: run_mip_cycle
+
+OBJECTS = main.o TFP_SCP.o graph.o matching.o TFP_SCP_simp.o
+
+main: $(OBJECTS)
+	$(CCC) $(CCFLAGS) $(CCLNDIRS) $(SRCDIR)/main.o $(SRCDIR)/TFP_SCP.o $(SRCDIR)/graph.o $(SRCDIR)/matching.o $(SRCDIR)/TFP_SCP_simp.o  $(CCLNFLAGS) -o $(SRCDIR)/main 
+
+main.o: $(SRCDIR)/main.cpp
+	$(CCC) -c $(CCFLAGS) $(SRCDIR)/main.cpp -o $(SRCDIR)/main.o -w 
+
+TFP_SCP.o: $(SRCDIR)/TFP_SCP.cpp $(SRCDIR)/TFP_SCP.h
+	$(CCC) -c $(CCFLAGS) $(SRCDIR)/TFP_SCP.cpp -o $(SRCDIR)/TFP_SCP.o -w 
+
+graph.o: $(SRCDIR)/graph.cpp $(SRCDIR)/graph.h
+	$(CCC) -c $(CCFLAGS) $(SRCDIR)/graph.cpp -o $(SRCDIR)/graph.o -w 
+
+matching.o: $(SRCDIR)/matching.cpp $(SRCDIR)/matching.h
+	$(CCC) -c $(CCFLAGS) $(SRCDIR)/matching.cpp -o $(SRCDIR)/matching.o -w 
+
+TFP_SCP_simp.o: $(SRCDIR)/TFP_SCP_simp.cpp $(SRCDIR)/TFP_SCP_simp.h
+	$(CCC) -c $(CCFLAGS) $(SRCDIR)/TFP_SCP_simp.cpp -o $(SRCDIR)/TFP_SCP_simp.o -w
+
+# deafult values 
+PROB?=TFP_SCP  # ?= assignment operator. It only assigns the value if it is not defined at runtime.
+NUM_VERT?=14
+SEC?=MTZ
+METHOD?=MinMatching
+GCLASS?= 1
+CTYPE?= 1
+INSTYPE?=random
+GTYPE?=undirected 
+
+test: main
+	$(SRCDIR)/main -prob $(PROB) -n $(NUM_VERT) -gclass $(GCLASS) -ctype $(CTYPE) -itype $(INSTYPE) -gtype $(GTYPE) -sec $(SEC) -method $(METHOD)
+# args respect the order
+
+
 
 # ------------------------------------------------------------
-fegs: fegs.o
-	$(CCC) $(CCFLAGS) $(CCLNDIRS) -o $(SRCDIR)/fegs $(SRCDIR)/fegs.o $(CCLNFLAGS)
-
-fegs_decomp: fegs_decomp.o
-	$(CCC) $(CCFLAGS) $(CCLNDIRS) -o $(SRCDIR)/fegs_decomp $(SRCDIR)/fegs_decomp.o $(CCLNFLAGS)
-
-fegs_cycle: fegs_cycle.o
-	$(CCC) $(CCFLAGS) $(CCLNDIRS) -o $(SRCDIR)/fegs_cycle $(SRCDIR)/fegs_cycle.o $(CCLNFLAGS)
+# make run3 ARGS+="teste1" ARGS+="teste2"
 # ------------------------------------------------------------
-fegs.o: $(SRCDIR)/fegs.cpp
-	$(CCC) -c $(CCFLAGS) $(SRCDIR)/fegs.cpp -o $(SRCDIR)/fegs.o
 
-fegs_decomp.o: $(SRCDIR)/fegs_decomp.cpp
-	$(CCC) -c $(CCFLAGS) $(SRCDIR)/fegs_decomp.cpp -o $(SRCDIR)/fegs_decomp.o
-
-fegs_cycle.o: $(SRCDIR)/fegs_cycle.cpp
-	$(CCC) -c $(CCFLAGS) $(SRCDIR)/fegs_cycle.cpp -o $(SRCDIR)/fegs_cycle.o
 # ------------------------------------------------------------
-run_mip: fegs 
-	$(SRCDIR)/fegs
+# main: main.o
+# 	$(CCC) $(CCFLAGS) $(CCLNDIRS) -o $(SRCDIR)/main $(SRCDIR)/main.o $(CCLNFLAGS)
 
-run_mip_decomp: fegs_decomp 
-	$(SRCDIR)/fegs_decomp
+# TFP_SPC: TFP_SPC.o
+# 	$(CCC) $(CCFLAGS) $(CCLNDIRS) -o $(SRCDIR)/TFP_SPC $(SRCDIR)/TFP_SPC.o $(CCLNFLAGS)
 
-run_mip_cycle: fegs_cycle 
-	$(SRCDIR)/fegs_cycle
+# TFP_SPC_simplified: TFP_SPC_simplified.o
+# 	$(CCC) $(CCFLAGS) $(CCLNDIRS) -o $(SRCDIR)/TFP_SPC_simplified $(SRCDIR)/TFP_SPC_simplified.o $(CCLNFLAGS)
+
+# TFP_SIPC: TFP_SIPC.o
+# 	$(CCC) $(CCFLAGS) $(CCLNDIRS) -o $(SRCDIR)/TFP_SIPC $(SRCDIR)/TFP_SIPC.o $(CCLNFLAGS) -w
+# # ------------------------------------------------------------
+# main.o: $(SRCDIR)/main.cpp
+# 	$(CCC) -c $(CCFLAGS) $(SRCDIR)/main.cpp -o $(SRCDIR)/main.o -w 
+
+# TFP_SPC.o: $(SRCDIR)/TFP_SPC.cpp
+# 	$(CCC) -c $(CCFLAGS) $(SRCDIR)/TFP_SPC.cpp -o $(SRCDIR)/TFP_SPC.o -w
+
+# TFP_SPC_simplified.o: $(SRCDIR)/TFP_SPC_simplified.cpp
+# 	$(CCC) -c $(CCFLAGS) $(SRCDIR)/TFP_SPC_simplified.cpp -o $(SRCDIR)/TFP_SPC_simplified.o -w
+
+# TFP_SIPC.o: $(SRCDIR)/TFP_SIPC.cpp
+# 	$(CCC) -c $(CCFLAGS) $(SRCDIR)/TFP_SIPC.cpp -o $(SRCDIR)/TFP_SIPC.o -w
+
+# -w remove all warnings 
+# ------------------------------------------------------------
+# test: main
+# 	$(SRCDIR)/main $(ARGS)
+
+# run_SPC: TFP_SPC 
+# 	$(SRCDIR)/TFP_SPC $(ARGS)
+
+# run_SPC_simplified: TFP_SPC_simplified 
+# 	$(SRCDIR)/TFP_SPC_simplified $(ARGS)
+
+# run_SIPC: TFP_SIPC 
+# 	$(SRCDIR)/TFP_SIPC $(ARGS)
+
+# runTest: main
+# 	$(SRCDIR)/main $(METHOD) $(NUM_VERT) $(GRAPH_CLASS) $(CLASS_TYPE) $(INSTANCE_TYPE)
+
+# ------------------------------------------------------------
+# make run3 ARGS+="teste1" ARGS+="teste2"
 # ------------------------------------------------------------
 clean:
-	rm -rf *.o $(SRCDIR)/*.o *~ $(SRCDIR)/fegs $(SRCDIR)/fegs_decomp $(SRCDIR)/fegs_cycle  #excluir o binario fegsCP
+	rm -rf *.o $(SRCDIR)/*.o *~ $(SRCDIR)/output $(SRCDIR)/main $(SRCDIR)/TFP_SPC $(SRCDIR)/TFP_SPC_simplified $(SRCDIR)/TFP_SIPC  #delete binaries
+ 

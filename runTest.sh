@@ -1,0 +1,1 @@
+bash ./testList/teste.txt 
