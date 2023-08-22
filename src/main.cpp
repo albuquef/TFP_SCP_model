@@ -100,7 +100,7 @@ int main(int argc, char** argv){
     // instance
     // Reader rd(false,n, gclass,ctype, instType);
 
-    Reader rd(false,n, gclass,ctype, instType,"directed");
+    Reader rd(false,n, gclass,ctype, instType,gtype);
     // Reader rd(false,14, 1,1, "random");
     // rd.show();
     Graph GRAPH = Graph(rd.G, rd.num_vertices, rd.G_type);

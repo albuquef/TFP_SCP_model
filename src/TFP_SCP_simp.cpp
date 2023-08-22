@@ -38,8 +38,8 @@ void TFP_SCP_SIMP::initModel(const char* method_SPP){
         model = IloModel(env);
         initVariables();        
 
+        cout << "[INFO] Creating Weighted Graph Shortest Positive Paths " << endl;
         if(method_SPP == "DijkstraComp" || method_SPP == "DijkstraTwoLabels" || strcmp(method_SPP,"DijkstraComp") == 0){
-            cout << "[INFO] Creating Weighted Graph Shortest Positive Path " << endl;
             cout << "[INFO] Method: "<< method_SPP << endl;
             cout << "[WARNING] Signed Graph must be balanced " << endl; // todo: add function to check if the graph is balanced
 
@@ -56,7 +56,6 @@ void TFP_SCP_SIMP::initModel(const char* method_SPP){
 
         }else if(method_SPP == "Matching" || method_SPP == "MinMatching" || strcmp(method_SPP,"MinMatching") == 0){
             
-            cout << "[INFO] Creating Weighted Graph Shortest Positive Path " << endl;
             cout << "[INFO] Method: "<< method_SPP << endl;
             cout << "[WARNING] Signed Graph must be undirected " << endl; // todo: check if graph is not directed
 
@@ -72,22 +71,34 @@ void TFP_SCP_SIMP::initModel(const char* method_SPP){
 
 
         }else if(method_SPP == "SEC_MTZ" || method_SPP == "MTZ" || strcmp(method_SPP,"MTZ") == 0){
-            cout << "[INFO] Creating Weighted Graph Shortest Positive Path " << endl;
+
             cout << "[INFO] ILP Method: "<< method_SPP << endl;
 
             // cout << "not working yet" << endl;
             
             create_GraphSPP_ILP();
+
+    
+            // cout << " Adjacency Matrix \n";
+            // for (int u = 0; u < rd->num_vertices; u++){
+            //     for (int v = 0; v < rd->num_vertices; v++)
+            //         cout <<  GRAPH.Graph_SPP[u][v] << " ";
+            //     cout<< "\n";
+            // }
+
             createModel(model,x,y);
             
         }else if(method_SPP == "SEC_SIGN" || method_SPP == "SIGN" || strcmp(method_SPP,"SIGN") == 0){
-            cout << "[INFO] Creating Weighted Graph Shortest Positive Path " << endl;
+
             cout << "[INFO] ILP Method: "<< method_SPP << endl;
 
-            cout << "not working yet" << endl;
             create_GraphSPP_ILP();
-            // create_GraphSPP_MTZ(model, x, y, f, lambda,mu);
-
+            // cout << " Adjacency Matrix \n";
+            // for (int u = 0; u < rd->num_vertices; u++){
+            //     for (int v = 0; v < rd->num_vertices; v++)
+            //         cout <<  GRAPH.Graph_SPP[u][v] << " ";
+            //     cout<< "\n";
+            // }
             createModel(model,x,y);
         }
         else{
@@ -346,9 +357,14 @@ void TFP_SCP_SIMP::create_GraphSPP_ILP(){
 
                 }if(rd->G[u][v] == 1){
                     G_aux[u][v] = 1;
-                }if(rd->G[u][v] == -1){
+                }else if(rd->G[u][v] == -1){
                     // incompatible -> infinite
                     G_aux[u][v] = INF;
+                }
+
+                if (u==v){
+                     G_aux[u][v] = 0;
+                     GRAPH.Graph_SPP[u][v] = 0;
                 }
 
             }
@@ -356,15 +372,27 @@ void TFP_SCP_SIMP::create_GraphSPP_ILP(){
         for(int u=0; u<rd->num_vertices;u++)
             for(int v=u+1; v<rd->num_vertices; v++){
                 if(G_aux[u][v] < INF && G_aux[v][u] < INF){
+                    
+                    int edg_weight = min(G_aux[u][v], G_aux[u][v]);
 
-                    GRAPH.Graph_SPP[u][v]=min(G_aux[u][v], G_aux[u][v]);
-
+                    GRAPH.Graph_SPP[u][v]=edg_weight;
+                    GRAPH.Graph_SPP[v][u]=edg_weight;
+                }else{
+                    GRAPH.Graph_SPP[u][v]=INF;
+                    GRAPH.Graph_SPP[v][u]=INF;
                 }
             }
     
     }else{
         for(int u=0; u<rd->num_vertices;u++)
-            for(int v=u+1; v<rd->num_vertices; v++){
+            for(int v=u; v<rd->num_vertices; v++){
+                
+                
+                if (u == v){
+                    GRAPH.Graph_SPP[u][v] = 0;
+                }
+                
+                
                 if(rd->G[u][v] == 0){
 
                     IloEnv env_SPP;
@@ -413,12 +441,11 @@ void TFP_SCP_SIMP::create_GraphSPP_ILP(){
                 }if(rd->G[u][v] == 1){
                     GRAPH.Graph_SPP[u][v] = 1;
                     GRAPH.Graph_SPP[v][u] = 1;
-                }if(rd->G[u][v] == -1){
+                }else if(rd->G[u][v] == -1){
                     // incompatible -> infinite
                     GRAPH.Graph_SPP[u][v] = INF;
                     GRAPH.Graph_SPP[v][u] = INF;
                 }
-
             }
     }
 
@@ -619,8 +646,11 @@ void TFP_SCP_SIMP::saveSolution(IloCplex& cplex,
     char arqv_instance[50];
     sprintf(arqv_instance, "%s_%d", instanceG,class_type);
     // sprintf(arq, "%s/results/%s.txt",CURRENT_DIR, arqv_instance);
-    sprintf(arq, "%s/results/%d_Vertices_%d-%d-%d_TFP_SCP_SIMP_%c.csv",CURRENT_DIR, rd->num_vertices, current_year, current_month, current_day,method_SPP);
-
+    if (strcmp(rd->G_type,"directed") == 0)
+        sprintf(arq, "%s/results/%d_Vertices_directed_%d-%d-%d_TFP_SCP_SIMP_%c.csv",CURRENT_DIR, rd->num_vertices, current_year, current_month, current_day,method_SPP);
+    else
+        sprintf(arq, "%s/results/%d_Vertices_%d-%d-%d_TFP_SCP_SIMP_%c.csv",CURRENT_DIR, rd->num_vertices, current_year, current_month, current_day,method_SPP);
+    
     FILE *file = fopen(arq, "w");
     if (file == NULL)
     {
@@ -659,9 +689,12 @@ void TFP_SCP_SIMP::saveResults(double timeTotal){
 
     char arq[1000];
     // sprintf(arq, "%s/results/%d_Vertices_2022-06-27_cycle_mtz.ods",CURRENT_DIR, rd->num_vertices);
-    sprintf(arq, "%s/results/result_%d_Vertices_%d-%d-%d_TFP_SCP_SIMP_%s.ods",CURRENT_DIR, rd->num_vertices, current_year, current_month, current_day,method_SPP);
-    if (rd->G_type == "directed")
+    if (strcmp(rd->G_type,"directed") == 0)
         sprintf(arq, "%s/results/result_%d_Vertices_directed_%d-%d-%d_TFP_SCP_SIMP_%s.ods",CURRENT_DIR, rd->num_vertices, current_year, current_month, current_day,method_SPP);
+    else
+        sprintf(arq, "%s/results/result_%d_Vertices_%d-%d-%d_TFP_SCP_SIMP_%s.ods",CURRENT_DIR, rd->num_vertices, current_year, current_month, current_day,method_SPP);
+    
+
 
     cout << arq << endl;
 
@@ -719,6 +752,7 @@ void TFP_SCP_SIMP::solveILP(){
     cpu0 = get_wall_time(); 
     if (!cplex.solve()){
         env.error() << "Failed to optimize LP." << endl;
+        // cout << "Solution status = " << cplex.getStatus()   << endl;
         // throw(-1);
     }
     // else{

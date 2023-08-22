@@ -45,7 +45,7 @@ void TFP_SCP::initILP(const char* typeSEC){
         }
 
         cplex = IloCplex(model);
-        exportILP(cplex,typeSEC);
+        // exportILP(cplex,typeSEC);
 
     } catch (IloException& e) {
         cerr << "ERROR: " << e.getMessage()  << endl;

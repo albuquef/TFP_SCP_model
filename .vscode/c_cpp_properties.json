@@ -3,7 +3,8 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "/home/felipe/Documents/UFC/MDCC/TFP_codes/TFP_SCP_model/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
