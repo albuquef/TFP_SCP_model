@@ -683,8 +683,6 @@ void TFP_SCP_SIMP::saveSolution(IloCplex& cplex,
     fclose(file);                
 }
 
-// void TFP_SCP_SIMP::saveResults(IloCplex& cplex,
-//                    double timeTFP, double time_WeightedGraph){
 void TFP_SCP_SIMP::saveResults(double timeTotal){
 
     char arq[1000];
