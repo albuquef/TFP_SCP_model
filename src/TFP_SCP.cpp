@@ -17,7 +17,6 @@ TFP_SCP::TFP_SCP(Reader *r, const char* typeSEC): rd(r){
     struct tm tm = *localtime(&t);
     current_day = tm.tm_mday; current_month = tm.tm_mon + 1; current_year = tm.tm_year + 1900;
     this->typeSEC = typeSEC;
-    cout<< "[INFO] Graph type: " << rd->G_type << endl; 
     initILP(typeSEC);
 }
 

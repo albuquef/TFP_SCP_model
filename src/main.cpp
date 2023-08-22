@@ -100,6 +100,7 @@ int main(int argc, char** argv){
     // instance
     // Reader rd(false,n, gclass,ctype, instType);
 
+
     Reader rd(false,n, gclass,ctype, instType,gtype);
     // Reader rd(false,14, 1,1, "random");
     // rd.show();
@@ -110,7 +111,6 @@ int main(int argc, char** argv){
         
         // TFP_SCP
         if(prob == "TFP_SCP"){
-            cout << prob << endl;
         
             cpu_start = get_cpu_time();
 
@@ -126,7 +126,6 @@ int main(int argc, char** argv){
         // TFP_SCP_simplified
         if(prob == "TFP_SCP_simp"){
             
-        
             cpu_start = get_cpu_time();
             
             // Graph GRAPH = Graph(rd.G, rd.num_vertices, rd.G_type);

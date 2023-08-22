@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include<fstream>
+#include <cstring>
+#include <string>
 
 #include <sys/time.h>
 
@@ -16,7 +18,7 @@ class Reader
 {
     public:
         char CURRENT_DIR[500];
-        char instanceG[50];
+        char instanceG[100];
         char instanceKR[50];
 
         int num_vertices;/* numero de vertices/individuos do grafo*/
@@ -187,11 +189,12 @@ class Reader
                 sprintf(instanceG, "%dverticesS%d", vert, graph_class);
             }
             else if (instance_type == "bitcoinotc" || instance_type == "epinions"){
-                if (G_type == "directed")
+                if (strcmp(G_type,"directed") == 0){
                     sprintf(instanceG, "%dvertices_%s_directed_S%d", vert, instance_type.c_str(), graph_class);
-                else
+                }
+                else{
                     sprintf(instanceG, "%dvertices_%s_S%d", vert, instance_type.c_str(), graph_class);
-
+                }
             }else{
                 cout << "[INFO] not a valid instance type" << endl;
             }
