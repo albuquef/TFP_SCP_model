@@ -106,6 +106,7 @@ void TFP_SCP_SIMP::initModel(const char* method_SPP){
         }
 
         cplex = IloCplex(model);
+        cplex.setParam(IloCplex::TiLim, 7200);
         // exportILP(cplex,method_SPP);
 
     } catch (IloException& e) {

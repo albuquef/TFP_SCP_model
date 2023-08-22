@@ -44,6 +44,7 @@ void TFP_SCP::initILP(const char* typeSEC){
         }
 
         cplex = IloCplex(model);
+        cplex.setParam(IloCplex::TiLim, 7200);
         // exportILP(cplex,typeSEC);
 
     } catch (IloException& e) {
