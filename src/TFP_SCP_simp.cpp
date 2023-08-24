@@ -38,73 +38,27 @@ void TFP_SCP_SIMP::initModel(const char* method_SPP){
         model = IloModel(env);
         initVariables();        
 
+        double cpu0, cpu1;
+        cpu0 = get_wall_time(); 
         cout << "[INFO] Creating Weighted Graph Shortest Positive Paths " << endl;
-        if(method_SPP == "DijkstraComp" || method_SPP == "DijkstraTwoLabels" || strcmp(method_SPP,"DijkstraComp") == 0){
-            cout << "[INFO] Method: "<< method_SPP << endl;
-            cout << "[WARNING] Signed Graph must be balanced " << endl; // todo: add function to check if the graph is balanced
-
-
-            double cpu0, cpu1;
-            cpu0 = get_wall_time(); 
+        
+        if(strcmp(method_SPP,"DijkstraComp") == 0 || strcmp(method_SPP,"MinMatching") == 0){
             
-            GRAPH.genereateGraph_weighted("DijkstraComp");
-            
-            cpu1 = get_wall_time();
-            this->time_GraphSPP = cpu1 - cpu0;
-
-            createModel(model,x,y);
-
-        }else if(method_SPP == "Matching" || method_SPP == "MinMatching" || strcmp(method_SPP,"MinMatching") == 0){
-            
-            cout << "[INFO] Method: "<< method_SPP << endl;
-            cout << "[WARNING] Signed Graph must be undirected " << endl; // todo: check if graph is not directed
-
-            double cpu0, cpu1;
-            cpu0 = get_wall_time(); 
-            
-            GRAPH.genereateGraph_weighted("MinMatching");
-            
-            cpu1 = get_wall_time();
-            this->time_GraphSPP = cpu1 - cpu0;
-
-            createModel(model,x,y);
-
-
-        }else if(method_SPP == "SEC_MTZ" || method_SPP == "MTZ" || strcmp(method_SPP,"MTZ") == 0){
-
-            cout << "[INFO] ILP Method: "<< method_SPP << endl;
-
-            // cout << "not working yet" << endl;
-            
-            create_GraphSPP_ILP();
-
-    
-            // cout << " Adjacency Matrix \n";
-            // for (int u = 0; u < rd->num_vertices; u++){
-            //     for (int v = 0; v < rd->num_vertices; v++)
-            //         cout <<  GRAPH.Graph_SPP[u][v] << " ";
-            //     cout<< "\n";
-            // }
-
-            createModel(model,x,y);
-            
-        }else if(method_SPP == "SEC_SIGN" || method_SPP == "SIGN" || strcmp(method_SPP,"SIGN") == 0){
-
-            cout << "[INFO] ILP Method: "<< method_SPP << endl;
-
-            create_GraphSPP_ILP();
-            // cout << " Adjacency Matrix \n";
-            // for (int u = 0; u < rd->num_vertices; u++){
-            //     for (int v = 0; v < rd->num_vertices; v++)
-            //         cout <<  GRAPH.Graph_SPP[u][v] << " ";
-            //     cout<< "\n";
-            // }
-            createModel(model,x,y);
-        }
-        else{
+            GRAPH.genereateGraph_weighted_paths(method_SPP);
+        
+        }else if(strcmp(method_SPP,"MTZ") == 0 || strcmp(method_SPP,"SIGN") == 0){
+        
+            create_GraphSPP_ILP(method_SPP);
+        
+        }else{
             cout << "[ERROR] Method for Shortest Positive Paths not defined" << endl;
         }
 
+        cpu1 = get_wall_time();
+        this->time_GraphSPP = cpu1 - cpu0;
+        cout << "[INFO] Time to weighted paths " << time_GraphSPP << endl;
+
+        createModel(model,x,y);
         cplex = IloCplex(model);
         cplex.setParam(IloCplex::TiLim, 7200);
         // exportILP(cplex,method_SPP);
@@ -297,8 +251,9 @@ void TFP_SCP_SIMP::createModel_SIGN(IloModel model_SIGN,BoolVarMatrix f,IloIntVa
     constr_PathComp_uv(model_SIGN,f,lambda, u,v); // every path with neg edges is pair
     constr_BreakCycle_SIGN_uv(model_SIGN,f,mu,u,v); // break cycle using SIGN
 }
-void TFP_SCP_SIMP::create_GraphSPP_ILP(){
+void TFP_SCP_SIMP::create_GraphSPP_ILP(const char* method_SPP){
 
+    cout << "[INFO] ILP Method: "<< method_SPP << endl;
 
     GRAPH.Graph_SPP = (int**)(malloc(rd->num_vertices*sizeof(int*)));
     for (int u=0;u<rd->num_vertices;u++)

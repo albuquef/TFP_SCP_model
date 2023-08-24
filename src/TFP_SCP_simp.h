@@ -83,7 +83,7 @@ private:
     constr_Incomp (IloModel model, BoolVar3Matrix x); // u and v not comp
 
 
-    void create_GraphSPP_ILP();
+    void create_GraphSPP_ILP(const char* method_SPP);
     void allocVars_SPP(IloEnv env_MTZ,BoolVarMatrix f);
 
     void createModel_MTZ(IloModel model_MTZ,BoolVarMatrix f,IloIntVar lambda,IloNumVarArray pi,int u, int v);  

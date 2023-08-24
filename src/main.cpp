@@ -108,35 +108,47 @@ int main(int argc, char** argv){
 
     if (GRAPH.isConnected()){
 
+
+
+        if (prob == "SPP"){
+            cpu_start = get_cpu_time();
+            GRAPH.genereateGraph_weighted_paths(METHOD);
+            cpu_final = get_cpu_time(); 
+            double timeTotal = cpu_final - cpu_start;
+            cout << "Time to solve SPPs: " << timeTotal << endl;
+            GRAPH.saveResults_SPP(instType,gclass,METHOD,timeTotal);
+        }
+
+
+
+
+
         
         // TFP_SCP
         if(prob == "TFP_SCP"){
         
-            cpu_start = get_cpu_time();
-
             TFP_SCP prob = TFP_SCP(&rd,SEC); 
+            
+            cpu_start = get_cpu_time();
             prob.solveILP();
-
             cpu_final = get_cpu_time(); 
-
-            prob.saveResults((cpu_final-cpu_start));
+            
+            double timeTotal = cpu_final - cpu_start;
+            // prob.saveResults(timeTotal);
 
         }
 
         // TFP_SCP_simplified
         if(prob == "TFP_SCP_simp"){
-            
-            cpu_start = get_cpu_time();
-            
-            // Graph GRAPH = Graph(rd.G, rd.num_vertices, rd.G_type);
+
             TFP_SCP_SIMP prob_simp = TFP_SCP_SIMP(&rd,GRAPH,METHOD);
 
-            
-            prob_simp.solveILP();
-            
+            cpu_start = get_cpu_time();
+            // prob_simp.solveILP();
             cpu_final = get_cpu_time(); 
-
-            prob_simp.saveResults((cpu_final-cpu_start));
+            
+            double timeTotal = cpu_final - cpu_start;
+            // prob_simp.saveResults(timeTotal);
 
         }
 

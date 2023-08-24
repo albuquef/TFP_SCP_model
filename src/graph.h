@@ -6,8 +6,9 @@
 #include <fstream>
 #include <cstdlib>
 #include <string>
+#include <cstring>
 #include <sstream>
-
+#include <unistd.h> // getcwd
 
 #include <iostream>
 #include <limits>
@@ -26,21 +27,24 @@ class Graph{
         int **w; // matrix graph weight :  default = [1]*num_vertices
         int num_vertices;// num of vertices |V|
         char* G_type; // directed or undirected
+        char CURRENT_DIR[500];
         bool connected;
         int **Graph_SPP; // matrix graph weighted by th Shortest Positive Path
         float **Even_Graph; // signed graph to even graph 
         int cont_pos_edges;
         int **Edmonds_Graph_st; // shortest even path to min weighted matching
         float **Weighted_Edmond_Graph_st; // shortest even path to min weighted matching
+        void saveResults_SPP    (string instance_type,int gclass,const char* method, double timeTotal);
     public:
         Graph(int **G,int num_vertices,char* G_type);
         ~Graph();
         void printGraph();
         void traverse(int u, bool visited[]);
         bool isConnected();
-        void genereateGraph_weighted(char* method);
+        void genereateGraph_weighted_paths(const char* method);
         void generateEven_Graph();
         double runEdmonds_Graph_st(int s, int t);
+        // bool isBalanced();
 
 };
 

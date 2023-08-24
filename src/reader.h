@@ -88,11 +88,11 @@ class Reader
             }
             fclose(inst);
 
-
-            if (instance_type == "random" && G_type == "undirected"){
-                // cout << "random" << endl;
+            if (instance_type == "random" &&  strcmp(G_type,"undirected") == 0){
+                cout << "[INFO] Random Undirected Instance" << endl;
                 for (int u = 0; u < num_vertices; u++){
                     for (int v = u+1; v < num_vertices; v++){
+                        // G[v][u] = G[u][v];
                         if (G[u][v] == 1 && G[v][u] != 1){
                             G[v][u] = 1;
                         }else if (G[v][u] == 1 && G[u][v] != 1){

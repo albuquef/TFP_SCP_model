@@ -4,19 +4,21 @@
 
 Graph::Graph(int **G,int num_vertices,char* G_type="undirected"){
 
+   getcwd(CURRENT_DIR, 500);
+
    this->G = G;
    this->G_type = G_type;
    this->num_vertices = num_vertices;
    if(isConnected()){
-      cout<< "Graph is connected" << endl;
+      cout<< "[INFO] Graph is connected" << endl;
       this->connected=true;
    }else{
-      cout<< "Graph is not connected" << endl;
+      cout<< "[INFO] Graph is not connected" << endl;
       this->connected=false;
    }
 
-   // genereateGraph_weighted("DijkstraComp");
-   // genereateGraph_weighted("MinMatching");
+   // genereateGraph_weighted_paths("DijkstraComp");
+   // genereateGraph_weighted_paths("MinMatching");
 
 
    // generateEdmonds_Graph_st(0,2);
@@ -60,8 +62,14 @@ Graph::~Graph(){
 
 }
 
-void Graph::printGraph()
-{
+void Graph::printGraph(){
+      cout << endl << "Numero de individuos: " << num_vertices << endl;
+      cout << " Adjacency Matrix  \n" ;
+      for (int u = 0; u < num_vertices; u++){
+         for (int v = 0; v < num_vertices; v++)
+            cout << G[u][v] << " ";
+         cout<< "\n";
+      }
 }
 
 void Graph::traverse(int u, bool visited[]){
@@ -138,17 +146,7 @@ void Graph::generateEven_Graph(){
                cout << "error: cont > num_vertices + cont_pos_edges" << endl;
             }
          }
-
-      // cout << endl << "Numero de individuos: " << (num_vertices+cont_pos_edges) << endl;
-      // cout << " Adjacency Matrix Even Graph \n";
-      // for (int u = 0; u < (num_vertices+cont_pos_edges); u++){
-      //    for (int v = 0; v < (num_vertices+cont_pos_edges); v++)
-      //       cout << Even_Graph[u][v] << " ";
-      //    cout<< "\n";
-      // }
-
 }
-
 double Graph::runEdmonds_Graph_st(int s, int t){
 
    // Edmonds Graph st = H-s, H-t, barra(E)
@@ -332,22 +330,20 @@ double Graph::runEdmonds_Graph_st(int s, int t){
 }
 
 
-void Graph::genereateGraph_weighted(char* method)
+void Graph::genereateGraph_weighted_paths(const char* method)
 {
    cout << "[INFO] Creating graph weighted by SCPs" << endl;
    cout << "[INFO] Method: " << method << endl;
-
+   
    Graph_SPP = (int**)(malloc(num_vertices*sizeof(int*)));
    for (int u=0;u<num_vertices;u++)
    {
       Graph_SPP[u] = (int*)malloc(num_vertices*sizeof(int));
    }
 
+   if (method=="DijkstraComp" || strcmp(method_SPP,"DijkstraComp") == 0){
 
-
-   if (method=="DijkstraComp"){
-
-      cout << "[INFO] Signed Graph must be balanced " << endl;
+      cout << "[WARNING] Signed Graph must be balanced " << endl; // todo: check if graph is not balanced
 
       GraphAdj *g;
       if (G_type == "directed"){
@@ -379,16 +375,11 @@ void Graph::genereateGraph_weighted(char* method)
             Graph_SPP[u][v] = distance_pos[v];
          }
       }
-      // cout << " Graph Matrix Weighted \n";
-      // for (int u = 0; u < num_vertices; u++){
-      //    for (int v = 0; v < num_vertices; v++)
-      //       cout <<  Graph_SPP[u][v] << " ";
-      //    cout<< "\n";
-      // }
-
    } 
-   else if(method == "MinMatching"){
+   else if(method == "MinMatching" || strcmp(method_SPP,"MinMatching") == 0){
 
+      cout << "[WARNING] Signed Graph must be undirected " << endl;  // todo: check if graph is not directed
+      cout << "[INFO] Running" << endl;
       // create Even Graph Gp
       generateEven_Graph();
 
@@ -418,15 +409,66 @@ void Graph::genereateGraph_weighted(char* method)
          }
 
 
-      // cout << " Graph Matrix Weighted \n";
-      // for (int u = 0; u < num_vertices; u++){
-      //    for (int v = 0; v < num_vertices; v++)
-      //       cout <<  Graph_SPP[u][v] << " ";
-      //    cout<< "\n";
-      // }
 
    }
 
 
 }
 
+void Graph::saveResults_SPP(string instance_type,int gclass,const char* method, double timeTotal){
+
+   char instanceG[50];
+
+   if (instance_type == "random"){
+         sprintf(instanceG, "%dverticesS%d", num_vertices, gclass);
+         if (strcmp(G_type,"directed") == 0)
+            sprintf(instanceG, "%dverticesS%d_directed", num_vertices, gclass);
+   }
+   else if (instance_type == "bitcoinotc" || instance_type == "epinions"){
+         if (strcmp(G_type,"directed") == 0){
+            sprintf(instanceG, "%dvertices_%s_directed_S%d", num_vertices, instance_type.c_str(), gclass);
+         }
+         else{
+            sprintf(instanceG, "%dvertices_%s_S%d", num_vertices, instance_type.c_str(), gclass);
+         }
+   }else{
+         cout << "[INFO] not a valid instance type" << endl;
+   }
+
+
+
+   char arq[1000];
+    // sprintf(arq, "%s/results/%d_Vertices_2022-06-27_cycle_mtz.ods",CURRENT_DIR, rd->num_vertices);
+    if (strcmp(G_type,"directed") == 0)
+        sprintf(arq, "%s/results/result_%d_Vertices_directed_SPP_%s.ods",CURRENT_DIR, num_vertices,method);
+    else
+        sprintf(arq, "%s/results/result_%d_Vertices_SPP_%s.ods",CURRENT_DIR, num_vertices,method);
+    
+
+    cout << arq << endl;
+
+    ofstream outputTable;
+    outputTable.open(arq,ios:: app);
+    if(outputTable.is_open()){
+
+        outputTable << instanceG << ";"; // grafo instancia
+        outputTable << num_vertices << ";";   // numero de vertices
+        outputTable << timeTotal <<  ";"; // tempo execucao tfp (cplex)
+        outputTable << " \n ";
+
+
+    }
+
+    outputTable.close();
+
+
+
+
+
+
+
+
+
+
+
+}
