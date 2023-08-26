@@ -155,6 +155,11 @@ double Graph::runEdmonds_Graph_st(int s, int t){
    int num_vertices_edmonds = 2*(num_vertices_EG) + 2; // +2 auxiliary vertices
    // cout << num_vertices_edmonds<< endl;
    
+
+   // int **Edmonds_Graph_st; // shortest even path to min weighted matching
+   // float **Weighted_Edmond_Graph_st; // shortest even path to min weighted matching
+
+
    // alocate memory
    int ** Edmonds_Graph_st = new int * [num_vertices_edmonds];
    for (int u = 0; u < num_vertices_edmonds; u++) {
@@ -324,6 +329,16 @@ double Graph::runEdmonds_Graph_st(int s, int t){
 
 
    // free memory matrix and matching
+
+   for(int i = 0; i < num_vertices_edmonds; ++i)
+  {
+     delete Edmonds_Graph_st[i];
+     delete Weighted_Edmond_Graph_st[i];
+  }
+
+  delete[] Edmonds_Graph_st;
+  delete[] Weighted_Edmond_Graph_st;
+
 
 
    return obj;

@@ -32,8 +32,8 @@ class Graph{
         int **Graph_SPP; // matrix graph weighted by th Shortest Positive Path
         float **Even_Graph; // signed graph to even graph 
         int cont_pos_edges;
-        int **Edmonds_Graph_st; // shortest even path to min weighted matching
-        float **Weighted_Edmond_Graph_st; // shortest even path to min weighted matching
+        // int **Edmonds_Graph_st; // shortest even path to min weighted matching
+        // float **Weighted_Edmond_Graph_st; // shortest even path to min weighted matching
         void saveResults_SPP    (string instance_type,int gclass,const char* method, double timeTotal);
     public:
         Graph(int **G,int num_vertices,char* G_type);
