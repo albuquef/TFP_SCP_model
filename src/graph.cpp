@@ -341,7 +341,7 @@ void Graph::genereateGraph_weighted_paths(const char* method)
       Graph_SPP[u] = (int*)malloc(num_vertices*sizeof(int));
    }
 
-   if (method=="DijkstraComp" || strcmp(method_SPP,"DijkstraComp") == 0){
+   if (method=="DijkstraComp" || strcmp(method,"DijkstraComp") == 0){
 
       cout << "[WARNING] Signed Graph must be balanced " << endl; // todo: check if graph is not balanced
 
@@ -376,10 +376,9 @@ void Graph::genereateGraph_weighted_paths(const char* method)
          }
       }
    } 
-   else if(method == "MinMatching" || strcmp(method_SPP,"MinMatching") == 0){
+   else if(method == "MinMatching" || strcmp(method,"MinMatching") == 0){
 
       cout << "[WARNING] Signed Graph must be undirected " << endl;  // todo: check if graph is not directed
-      cout << "[INFO] Running" << endl;
       // create Even Graph Gp
       generateEven_Graph();
 

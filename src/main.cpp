@@ -111,12 +111,28 @@ int main(int argc, char** argv){
 
 
         if (prob == "SPP"){
-            cpu_start = get_cpu_time();
-            GRAPH.genereateGraph_weighted_paths(METHOD);
-            cpu_final = get_cpu_time(); 
-            double timeTotal = cpu_final - cpu_start;
-            cout << "Time to solve SPPs: " << timeTotal << endl;
-            GRAPH.saveResults_SPP(instType,gclass,METHOD,timeTotal);
+
+
+            if(strcmp(METHOD,"DijkstraComp") == 0 || strcmp(METHOD,"MinMatching") == 0){
+                cpu_start = get_cpu_time();
+                
+                GRAPH.genereateGraph_weighted_paths(METHOD);
+                cpu_final = get_cpu_time();
+                
+                double timeTotal = cpu_final - cpu_start;
+                cout << "Time to solve SPPs: " << timeTotal << endl;
+                GRAPH.saveResults_SPP(instType,gclass,METHOD,timeTotal);
+            
+            }else if(strcmp(METHOD,"MTZ") == 0 || strcmp(METHOD,"SIGN") == 0){
+            
+                TFP_SCP_SIMP prob_simp = TFP_SCP_SIMP(&rd,GRAPH,METHOD);
+                double timeTotal = prob_simp.time_GraphSPP;
+                GRAPH.saveResults_SPP(instType,gclass,METHOD,timeTotal);
+            
+            }else{
+                cout << "[ERROR] Method for Shortest Positive Paths not defined" << endl;
+            }
+
         }
 
 
@@ -126,29 +142,29 @@ int main(int argc, char** argv){
         
         // TFP_SCP
         if(prob == "TFP_SCP"){
-        
-            TFP_SCP prob = TFP_SCP(&rd,SEC); 
             
             cpu_start = get_cpu_time();
+            TFP_SCP prob = TFP_SCP(&rd,SEC); 
+            
             prob.solveILP();
             cpu_final = get_cpu_time(); 
             
             double timeTotal = cpu_final - cpu_start;
-            // prob.saveResults(timeTotal);
+            prob.saveResults(timeTotal);
 
         }
 
         // TFP_SCP_simplified
         if(prob == "TFP_SCP_simp"){
 
+            cpu_start = get_cpu_time();
             TFP_SCP_SIMP prob_simp = TFP_SCP_SIMP(&rd,GRAPH,METHOD);
 
-            cpu_start = get_cpu_time();
-            // prob_simp.solveILP();
+            prob_simp.solveILP();
             cpu_final = get_cpu_time(); 
             
             double timeTotal = cpu_final - cpu_start;
-            // prob_simp.saveResults(timeTotal);
+            prob_simp.saveResults(timeTotal);
 
         }
 

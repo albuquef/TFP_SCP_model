@@ -56,7 +56,7 @@ void TFP_SCP_SIMP::initModel(const char* method_SPP){
 
         cpu1 = get_wall_time();
         this->time_GraphSPP = cpu1 - cpu0;
-        cout << "[INFO] Time to weighted paths " << time_GraphSPP << endl;
+        cout << "[INFO] Time: " << time_GraphSPP << endl;
 
         createModel(model,x,y);
         cplex = IloCplex(model);
