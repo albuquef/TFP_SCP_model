@@ -97,6 +97,42 @@ bool Graph::isConnected(){
 }
 
 
+int* Graph::getNeg_Neighbors(int u){
+
+   int* vet = new int[num_vertices];
+   for(int i=0; i<num_vertices;i++){ vet[i] = -1;}
+
+   int cont = 0;
+   for(int v=0;v<num_vertices;v++){
+      if (G[u][v] < 0){
+         vet[cont] = v;
+         cont+=1;
+      }
+   }
+
+   for(int i=0; i<num_vertices;i++){ cout << vet[i] << " ";}
+   cout << endl;
+
+   return vet;
+
+}
+bool Graph::isBalanced(){
+   
+   int V1[num_vertices];
+   int V2[num_vertices];
+
+   int* neig_neg = getNeg_Neighbors(1);
+   for(int v=0;v<num_vertices;v++){
+      if(neig_neg[v] != -1)
+         cout << neig_neg[v] << " ";
+      else
+         cout << "aqui" << endl;
+   }
+   cout << "\n";
+   cout << "aqui" << endl;
+}
+
+
 void Graph::generateEven_Graph(){
 
    cont_pos_edges = 0;
@@ -341,7 +377,7 @@ void Graph::genereateGraph_weighted_paths(const char* method)
       Graph_SPP[u] = (int*)malloc(num_vertices*sizeof(int));
    }
 
-   if (method=="DijkstraComp" || strcmp(method_SPP,"DijkstraComp") == 0){
+   if (method=="DijkstraComp" || strcmp(method,"DijkstraComp") == 0){
 
       cout << "[WARNING] Signed Graph must be balanced " << endl; // todo: check if graph is not balanced
 
@@ -376,7 +412,7 @@ void Graph::genereateGraph_weighted_paths(const char* method)
          }
       }
    } 
-   else if(method == "MinMatching" || strcmp(method_SPP,"MinMatching") == 0){
+   else if(method == "MinMatching" || strcmp(method,"MinMatching") == 0){
 
       cout << "[WARNING] Signed Graph must be undirected " << endl;  // todo: check if graph is not directed
       cout << "[INFO] Running" << endl;

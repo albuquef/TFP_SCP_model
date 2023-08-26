@@ -44,7 +44,8 @@ class Graph{
         void genereateGraph_weighted_paths(const char* method);
         void generateEven_Graph();
         double runEdmonds_Graph_st(int s, int t);
-        // bool isBalanced();
+        bool isBalanced();
+        int* getNeg_Neighbors(int u);
 
 };
 
