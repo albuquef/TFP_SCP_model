@@ -150,6 +150,7 @@ void TFP_SCP::createModel(IloModel model, BoolVar3Matrix x, BoolVar3Matrix y, Bo
     //object function
     objFunction(model,y,f);
     //constraints
+    cout << "[INFO] Adding Constraints "<< endl;
     constr_OneTeam(model, x); // max one team with one skill
     constr_MinSkill(model, x); // min skill s per team j
     constr_LinY(model,x,y); // linearization y with x
@@ -221,6 +222,7 @@ void TFP_SCP::createModel_SIGN(IloModel model, BoolVar3Matrix x, BoolVar3Matrix 
 
 
 void TFP_SCP::objFunction (IloModel model, BoolVar3Matrix y, BoolVar4Matrix f){
+    cout << "[INFO] Adding Objective Function "<< endl;
     IloEnv env = model.getEnv();
 
     IloExpr objExpr(env);

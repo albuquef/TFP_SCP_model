@@ -27,7 +27,7 @@ typedef IloArray<NumVarMatrix> NumVar3Matrix;
 class TFP_SCP_SIMP{
 
 public:
-    TFP_SCP_SIMP(Reader *r, const Graph & Grph,const char* method_SPP);
+    TFP_SCP_SIMP(Reader *r, const Graph & Grph,const char* method_SPP, bool VALID_INEQ=false);
     ~TFP_SCP_SIMP();
     void exportILP      (IloCplex& cplex,const char* method_SPP);
     void solveILP       (void);
@@ -42,11 +42,18 @@ public:
     //                     double timeCplex, double time_WeightedGraph);
     void saveResults    (double timeTotal);
     void printInstance  (void);
+    int getNumber_Skills(int u);
+    int getProjectNumber_Skills(int j);
+    bool isIntersection_s(int u1, int u2, int s);
+    bool isIntersection_Project_s(int u1, int u2, int s);
+    void fillVector_Skills(int u, int *vector);
+    void fillVector_Project_Skills(int j, int *vector);    
     char instanceG[50];
     char instanceKR[50];
     char CURRENT_DIR[500];
     int current_day, current_month, current_year;
     const char* method_SPP;
+    bool VALID_INEQ;
     double timeTFP;
     double time_GraphSPP;
     
@@ -95,6 +102,10 @@ private:
     void constr_PathComp_uv (IloModel model_SPP, BoolVarMatrix f, IloIntVar lambda, int u, int v);
     void constr_BreakCycle_MTZ_uv(IloModel model_SPP, BoolVarMatrix f, IloNumVarArray pi, int u, int v);
     void constr_BreakCycle_SIGN_uv(IloModel model_SPP, BoolVarMatrix f, IloBoolVarArray mu, int u, int v);
+
+    
+    void Valid_Inequalities(IloModel model, BoolVar3Matrix x, BoolVar3Matrix y);
+
 
 };
 

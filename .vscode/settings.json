@@ -5,6 +5,8 @@
         "ostream": "cpp",
         "filesystem": "cpp",
         "sstream": "cpp",
-        "new": "cpp"
+        "new": "cpp",
+        "array": "cpp",
+        "*.tcc": "cpp"
     }
 }

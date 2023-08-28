@@ -35,6 +35,7 @@ int main(int argc, char** argv){
     int gclass,ctype;
     const char* SEC; const char* METHOD; char* instType; char* gtype;
     int n;
+    bool valid_ineq;
     // Parameters parsing
     for (int i = 1; i < argc; ++i) {
         if (argv[i][0] == '-') {
@@ -54,6 +55,8 @@ int main(int argc, char** argv){
                 METHOD = argv[i + 1];
             } else if (strcmp(argv[i], "-gtype") == 0) {
                 gtype = argv[i + 1];
+            } else if (strcmp(argv[i], "-validIneq") == 0) {
+                valid_ineq = stoi(argv[i + 1]);
             } else {
                 cerr << "Unknown parameter: " << argv[i] << endl;
                 exit(1);
@@ -136,10 +139,6 @@ int main(int argc, char** argv){
         }
 
 
-
-
-
-        
         // TFP_SCP
         if(prob == "TFP_SCP"){
             
@@ -158,19 +157,18 @@ int main(int argc, char** argv){
         if(prob == "TFP_SCP_simp"){
 
             cpu_start = get_cpu_time();
-            TFP_SCP_SIMP prob_simp = TFP_SCP_SIMP(&rd,GRAPH,METHOD);
+            TFP_SCP_SIMP prob_simp = TFP_SCP_SIMP(&rd,GRAPH,METHOD,valid_ineq);
 
             prob_simp.solveILP();
             cpu_final = get_cpu_time(); 
             
             double timeTotal = cpu_final - cpu_start;
             prob_simp.saveResults(timeTotal);
-
         }
 
     }else{
         cout << "[ERROR] Graph is not connected" << endl;
     }
-
+    
     return 0;
 }

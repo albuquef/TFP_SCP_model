@@ -10,7 +10,7 @@ double get_wall_time(){
     }
 }
 
-TFP_SCP_SIMP::TFP_SCP_SIMP(Reader *r, const Graph & Grph,const char* method_SPP): rd(r), GRAPH(Grph){
+TFP_SCP_SIMP::TFP_SCP_SIMP(Reader *r, const Graph & Grph,const char* method_SPP, bool VALID_INEQ): rd(r), GRAPH(Grph){
 // TFP_SCP_SIMP::TESTE(){
     
     getcwd(CURRENT_DIR, 500);
@@ -18,6 +18,7 @@ TFP_SCP_SIMP::TFP_SCP_SIMP(Reader *r, const Graph & Grph,const char* method_SPP)
     struct tm tm = *localtime(&t);
     current_day = tm.tm_mday; current_month = tm.tm_mon + 1; current_year = tm.tm_year + 1900;
     this->method_SPP = method_SPP;
+    this->VALID_INEQ = VALID_INEQ;
 
     // cout<< "[INFO] Graph type: " << rd->G_type << endl; 
     initModel(method_SPP);
@@ -61,7 +62,7 @@ void TFP_SCP_SIMP::initModel(const char* method_SPP){
         createModel(model,x,y);
         cplex = IloCplex(model);
         cplex.setParam(IloCplex::TiLim, 7200);
-        // exportILP(cplex,method_SPP);
+        exportILP(cplex,method_SPP);
 
     } catch (IloException& e) {
         cerr << "ERROR: " << e.getMessage()  << endl;
@@ -456,13 +457,20 @@ void TFP_SCP_SIMP::createModel(IloModel model, BoolVar3Matrix x, BoolVar3Matrix 
     //object function
     objFunction(model,y);
     //constraints
+    cout << "[INFO] Adding Constraints "<< endl;
     constr_OneTeam(model, x); // max one team with one skill
     constr_MinSkill(model, x); // min skill s per team j
     constr_LinY(model,x,y); // linearization y with x
     constr_Incomp(model,y); // negative edge incompatibility
+
+    if(VALID_INEQ)
+        Valid_Inequalities(model,x,y); // Valid inequalities TFP
 }
 
 void TFP_SCP_SIMP::objFunction (IloModel model, BoolVar3Matrix y){
+    
+    cout << "[INFO] Adding Objective Function "<< endl;
+    
     IloEnv env = model.getEnv();
 
     IloExpr objExpr(env);
@@ -555,6 +563,215 @@ void TFP_SCP_SIMP::constr_Incomp(IloModel model, BoolVar3Matrix y){
                 model.add(expr == 0);
                 expr.end();
             }
+
+}
+
+
+
+void TFP_SCP_SIMP::fillVector_Skills(int u, int *vector){ // [1,0,1,1....] => [0,2,3...]
+
+    // int size = getNumber_Skills(u);
+    // static int vet[size];
+    // // int *vet= malloc(size);  
+
+    int cont = 0;
+    int cont_vet = 0;
+    for(int s=0;s<rd->num_skills;s++){
+        if(rd->K[u][s] > 0){
+            vector[cont_vet] = cont;
+            cont_vet+=1;
+        }
+        cont +=1;
+    }
+
+}
+void TFP_SCP_SIMP::fillVector_Project_Skills(int j, int *vector){ // [1,0,1,1....] => [0,2,3...]
+
+    // int size = getNumber_Skills(u);
+    // static int vet[size];
+    // // int *vet= malloc(size);  
+
+    int cont = 0;
+    int cont_vet = 0;
+    for(int s=0;s<rd->num_skills;s++){
+        if(rd->R[j][s] > 0){
+            vector[cont_vet] = cont;
+            cont_vet+=1;
+        }
+        cont +=1;
+    }
+
+}
+int TFP_SCP_SIMP::getNumber_Skills(int u){
+
+    int cont = 0;
+    for(int s=0;s<rd->num_skills;s++)
+        if(rd->K[u][s] > 0)
+            cont+=1;
+    return cont;
+}
+int TFP_SCP_SIMP::getProjectNumber_Skills(int j){
+
+    int cont = 0;
+    for(int s=0;s<rd->num_skills;s++)
+        if(rd->R[j][s] > 0)
+            cont+=1;
+    return cont;
+}
+int intersection(int a[], int b[], int n, int m)
+{
+
+    int i = 0, j = 0, k = 0;
+    int* result = new int[n + m];
+    while (i < n && j < m) {
+        if (a[i] < b[j])
+            i++;
+        else if (a[i] > b[j])
+            j++;
+        else {
+            if (k != 0 && a[i] == result[k - 1]) {
+                i++;
+                j++;
+            }
+            else {
+                result[k] = a[i];
+                i++;
+                j++;
+                k++;
+            }
+        }
+    }
+    // cout << "Intersection: ";
+    // for (int x = 0; x < k; x++)
+    //     cout << result[x] << " ";
+    // cout << endl;
+
+    if(k==1)
+        return int(result[0]);
+    return -1;
+    
+
+}
+bool TFP_SCP_SIMP::isIntersection_s(int u1, int u2, int s){
+
+    int vet_u1[getNumber_Skills(u1)];
+    fillVector_Skills(u1,vet_u1);
+    // for (int i=0; i < getNumber_Skills(u1); i++)
+    //     cout << *(vet_u1 + i) << " ";
+    // cout << "\n";
+
+    int vet_u2[getNumber_Skills(u2)];
+    fillVector_Skills(u2,vet_u2);
+    // for (int i=0; i < getNumber_Skills(u2); i++)
+    //     cout << *(vet_u2 + i) << " ";
+    // cout << "\n";    
+
+    int n = sizeof(vet_u1) / sizeof(vet_u1[0]);
+    int m = sizeof(vet_u2) / sizeof(vet_u2[0]);
+
+    // // sort
+    sort(vet_u1, vet_u1 + n);
+    sort(vet_u2, vet_u2 + m);
+ 
+    // // Function call
+    int flag = false;
+    flag = intersection(vet_u1, vet_u2, n, m);
+
+    if (flag == s) 
+        return true;
+    return false;
+
+}
+bool TFP_SCP_SIMP::isIntersection_Project_s(int u, int j, int s){
+
+    int vet_u[getNumber_Skills(u)];
+    fillVector_Skills(u,vet_u);
+    // for (int i=0; i < getNumber_Skills(u); i++)
+    //     cout << *(vet_u + i) << " ";
+    // cout << "\n";
+
+    int vet_j[getProjectNumber_Skills(j)];
+    fillVector_Project_Skills(j,vet_j);
+    // for (int i=0; i < getProjectNumber_Skills(j); i++)
+    //     cout << *(vet_j + i) << " ";
+    // cout << "\n";    
+
+    int n = sizeof(vet_u) / sizeof(vet_u[0]);
+    int m = sizeof(vet_j) / sizeof(vet_j[0]);
+
+    // // sort
+    sort(vet_u, vet_u + n);
+    sort(vet_j, vet_j + m);
+ 
+    // // Function call
+    int flag = false;
+    flag = intersection(vet_u, vet_j, n, m);
+
+    if (flag == s) 
+        return true;
+    return false;
+
+}
+void TFP_SCP_SIMP::Valid_Inequalities(IloModel model, BoolVar3Matrix x, BoolVar3Matrix y){
+
+    cout << "[INFO] Adding Valid Inequalities \n" << endl;
+
+    IloEnv env = model.getEnv();
+    // int u = 0;
+    // int v = 1;
+    // int j = 1;
+    // int s = 0;
+
+
+    // model.add(x[5][1][7] == 1);
+    // model.add(x[19][1][7] == 1);
+
+    for(int u=0;u<rd->num_vertices;u++)
+        for(int j=0;j<rd->num_teams;j++)
+            for(int s=0;s<rd->num_skills;s++)
+                if(rd->K[u][s]>0 && rd->R[j][s]>0){
+                    IloExpr expr1(env);
+                    bool expr1_bool=false;
+
+                    for(int v=0;v<rd->num_vertices;v++){ // not u<v but every v that can work with u (can be u > v) that means v \in B(u,j,s)
+                        if(rd->K[v][s]>0){
+                            if (u<v){
+                                if(isIntersection_s(u,v,s) && isIntersection_Project_s(u,j,s) && isIntersection_Project_s(v,j,s)){
+                                    if(rd->R[j][s] == 1){
+                                        model.add(y[u][v][j] == 0);
+                                    }else{
+                                        expr1 += y[u][v][j];
+                                        expr1_bool = true;
+                                    }
+                                }
+                            }
+                            if (u>v){
+                                if(isIntersection_s(u,v,s) && isIntersection_Project_s(u,j,s) && isIntersection_Project_s(v,j,s)){
+                                    if(rd->R[j][s] == 1){
+                                        model.add(y[v][u][j] == 0);
+                                    }else{
+                                        expr1 += y[v][u][j];
+                                        expr1_bool = true;
+                                    }
+                                }
+                            }
+                        }       
+                    }
+                    
+                    IloExpr expr2(env);
+                    bool expr2_bool=false;
+                    for(int s_out=0;s_out<rd->num_skills;s_out++){
+                        if(s != s_out && rd->K[u][s_out]>0 && rd->R[j][s_out]>=2){expr2 += rd->R[j][s]*x[u][j][s_out]; expr2_bool=true;}
+                    }
+
+                    // if(expr1_bool  && expr2_bool)
+                    if(expr1_bool && rd->R[j][s] >= 2)
+                        model.add(expr1 - (rd->R[j][s] - 1)*x[u][j][s] - expr2 >= 0);
+
+                    expr1.end(); expr2.end();
+                
+                }
+
 
 }
 
@@ -695,7 +912,7 @@ void TFP_SCP_SIMP::exportILP(IloCplex& cplex,const char* method_SPP){
     strcat(ilpname, "TFP_SCP_simp-");
     strcat(ilpname, method_SPP);
     strcat(ilpname, ".lp");
-    cout<< "[INFO]: Creating the the file lp: ";
+    cout<< "[INFO] Creating the the file lp: ";
     cout << ilpname << endl;
     cplex.exportModel(ilpname);
 }

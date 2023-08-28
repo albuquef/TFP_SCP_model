@@ -88,7 +88,8 @@ TFP_SCP_simp.o: $(SRCDIR)/TFP_SCP_simp.cpp $(SRCDIR)/TFP_SCP_simp.h
 	$(CCC) -c $(CCFLAGS) $(SRCDIR)/TFP_SCP_simp.cpp -o $(SRCDIR)/TFP_SCP_simp.o -w
 
 # deafult values 
-PROB?=TFP_SCP  # ?= assignment operator. It only assigns the value if it is not defined at runtime.
+# PROB?=TFP_SCP  # ?= assignment operator. It only assigns the value if it is not defined at runtime.
+PROB?=TFP_SCP_simp 
 NUM_VERT?=14
 SEC?=MTZ
 METHOD?=MinMatching
@@ -96,9 +97,10 @@ GCLASS?= 1
 CTYPE?= 1
 INSTYPE?=random
 GTYPE?=undirected 
+VALID_INEQ?=0
 
 test: main
-	$(SRCDIR)/main -prob $(PROB) -n $(NUM_VERT) -gclass $(GCLASS) -ctype $(CTYPE) -itype $(INSTYPE) -gtype $(GTYPE) -sec $(SEC) -method $(METHOD)
+	$(SRCDIR)/main -prob $(PROB) -n $(NUM_VERT) -gclass $(GCLASS) -ctype $(CTYPE) -itype $(INSTYPE) -gtype $(GTYPE) -sec $(SEC) -method $(METHOD) -validIneq $(VALID_INEQ)
 # args respect the order
 
 
