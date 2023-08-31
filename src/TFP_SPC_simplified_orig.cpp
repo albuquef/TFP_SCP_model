@@ -992,7 +992,7 @@ runTests(string Z_mode){
                         
                         double cpu0, cpu1;
                         cplex.setParam(IloCplex::TiLim, 3600); // time limit 2h (7200)
-                        cplex.setParam(IloCplex::TreLim, 7000); // memory limit 7GB
+                        cplex.setParam(IloCplex::TreLim, 30000); // memory limit 7GB
                         // cplex.setParam(IloCplex::WorkMem, 2000);
 
                         // cplex.setOut(env.getNullStream()); // remove Logging output
