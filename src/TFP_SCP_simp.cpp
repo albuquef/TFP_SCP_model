@@ -61,7 +61,8 @@ void TFP_SCP_SIMP::initModel(const char* method_SPP){
 
         createModel(model,x,y);
         cplex = IloCplex(model);
-        cplex.setParam(IloCplex::TiLim, 7200);
+        // cplex.setParam(IloCplex::TreLim, 30000); // tree memory limit 30GB
+        // cplex.setParam(IloCplex::WorkMem, 10); // memory limit 30GB
         exportILP(cplex,method_SPP);
 
     } catch (IloException& e) {
@@ -878,6 +879,7 @@ void TFP_SCP_SIMP::saveResults(double timeTotal){
         outputTable << rd->num_vertices << ";";   // numero de vertices
         outputTable << rd->num_skills << ";";   // qtd de hab
         outputTable << rd->num_teams << ";";   // qtd de proj
+        outputTable << method_SPP << ";";   // metodo Shortest Positive Path
         outputTable << cplex.getStatus() << ";"; // Status cplex
         outputTable << cplex.getObjValue() << ";"; // valor fo
         outputTable << cplex.getNnodes() << ";"; // num nos
@@ -886,6 +888,10 @@ void TFP_SCP_SIMP::saveResults(double timeTotal){
         outputTable << timeTFP <<  ";"; // tempo execucao tfp (felipe)
         outputTable << cplex.getTime() <<  ";"; // tempo execucao tfp (cplex)
         outputTable << timeTotal <<  ";"; // tempo execucao tfp (cplex)
+        if (VALID_INEQ)
+            outputTable << "VI" <<  ";"; // tempo execucao tfp (cplex)
+        else
+            outputTable << "NOT VI" <<  ";"; // tempo execucao tfp (cplex)
         outputTable << " \n ";
 
 
