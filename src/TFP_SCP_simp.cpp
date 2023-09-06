@@ -780,14 +780,14 @@ void TFP_SCP_SIMP::Valid_Inequalities_STeams(IloModel model, BoolVar3Matrix x, B
                                         expr1_bool = true;
                                     }
 
+                                }else{ // (u,v) \notin C(j,S)
+                                    //if(isIntersection_s(u,v,s) && isIntersection_s(u,j,s) && isIntersection_s(v,j,s) && rd->R[j][s]==1)
+                                    if (u<v)
+                                        model.add(y[u][v][j] == 0);
+                                    if (u>v)
+                                        model.add(y[v][u][j] == 0);
                                 }
-                                // need to test 
-                                // if(isIntersection_s(u,v,s) && isIntersection_s(u,j,s) && isIntersection_s(v,j,s) && rd->R[j][s]==1){
-                                //     if (u<v)
-                                //         model.add(y[u][v][j] == 0);
-                                //     if (u>v)
-                                //         model.add(y[v][u][j] == 0);
-                                // }
+
                             
                         }       
                     }
@@ -842,20 +842,28 @@ void TFP_SCP_SIMP::Valid_Inequalities_IndepSet(IloModel model, BoolVar3Matrix x,
 
                     for(int v=0;v<rd->num_vertices;v++){ // not u<v but every v that can work with u (can be u > v) that means v \in B(u,j,s)
                         if(rd->K[v][s]>0 && GRAPH.Graph_SPP[u][v]>0 ){ // s in s(v) && (u,v) in E'
-                                // s(u,j) dif {s} ou s(v,j) dif {s} ou t(j,s) >= 2
-                                if(!isIntersection_s(u,j,s) || !isIntersection_Project_s(v,j,s) || rd->R[j][s]>=2){
+                        
+                            // s(u,j) dif {s} ou s(v,j) dif {s} ou t(j,s) >= 2
+                            // if(!(isIntersection_s(u,j,s) && isIntersection_Project_s(v,j,s) && rd->R[j][s]<2)){
+                            if(!isIntersection_s(u,j,s) || !isIntersection_Project_s(v,j,s) || rd->R[j][s]>=2){    
+                                
+                                if (u<v){
+                                    expr_y += y[u][v][j];
+                                    expr_y_bool = true;
                                     
-                                    if (u<v){
-                                        expr_y += y[u][v][j];
-                                        expr_y_bool = true;
-                                        
-                                    }
-                                    if (u>v){
-                                        expr_y += y[v][u][j];
-                                        expr_y_bool = true;
-                                    }
+                                }
+                                if (u>v){
+                                    expr_y += y[v][u][j];
+                                    expr_y_bool = true;
+                                }
 
-                                }                            
+                            }else{
+                                if (u<v)
+                                    model.add(y[u][v][j] == 0);
+                                if (u>v)
+                                    model.add(y[v][u][j] == 0);
+                            }
+
                         }       
                     }
 
@@ -870,40 +878,40 @@ void TFP_SCP_SIMP::Valid_Inequalities_IndepSet(IloModel model, BoolVar3Matrix x,
             expr_x.end(); expr_y.end();
         }
 
-    for(int j=0;j<rd->num_teams;j++){
+    // for(int j=0;j<rd->num_teams;j++){
         
-        IloExpr expr_y(env);
-        bool expr_y_bool=false;
+    //     IloExpr expr_y(env);
+    //     bool expr_y_bool=false;
 
-        for(int u=0;u<rd->num_vertices;u++)
-            for(int s=0;s<rd->num_skills;s++)
-                if(rd->K[u][s]>0 && rd->R[j][s]>0){ // s in s(u) and s in s(j)
+    //     for(int u=0;u<rd->num_vertices;u++)
+    //         for(int s=0;s<rd->num_skills;s++)
+    //             if(rd->K[u][s]>0 && rd->R[j][s]>0){ // s in s(u) and s in s(j)
 
-                    for(int v=u+1;v<rd->num_vertices;v++){ // not u<v but every v that can work with u (can be u > v) that means v \in B(u,j,s)
-                        if(rd->K[v][s]>0 && GRAPH.Graph_SPP[u][v]>0 ){ // s in s(v) && (u,v) in E'
-                                // s(u,j) dif {s} ou s(v,j) dif {s} ou t(j,s) >= 2
-                                if(!isIntersection_s(u,j,s) || !isIntersection_Project_s(v,j,s) || rd->R[j][s]>=2){
+    //                 for(int v=u+1;v<rd->num_vertices;v++){ // not u<v but every v that can work with u (can be u > v) that means v \in B(u,j,s)
+    //                     if(rd->K[v][s]>0 && GRAPH.Graph_SPP[u][v]>0 ){ // s in s(v) && (u,v) in E'
+    //                             // s(u,j) dif {s} ou s(v,j) dif {s} ou t(j,s) >= 2
+    //                             if(!isIntersection_s(u,j,s) || !isIntersection_Project_s(v,j,s) || rd->R[j][s]>=2){
                                     
-                                    if (u<v){
-                                        expr_y += y[u][v][j];
-                                        expr_y_bool = true;
-                                    }
-                                    // if (u>v){
-                                    //     expr_y += y[v][u][j];
-                                    //     expr_y_bool = true;
-                                    // }
+    //                                 if (u<v){
+    //                                     expr_y += y[u][v][j];
+    //                                     expr_y_bool = true;
+    //                                 }
+    //                                 // if (u>v){
+    //                                 //     expr_y += y[v][u][j];
+    //                                 //     expr_y_bool = true;
+    //                                 // }
 
-                                }                            
-                        }       
-                    }
+    //                             }                            
+    //                     }       
+    //                 }
 
-                }
+    //             }
 
-        if(expr_y_bool)
-            model.add(expr_y == num_skills_j[j] * (num_skills_j[j] - 1)/2);
-        expr_y.end();
+    //     if(expr_y_bool)
+    //         model.add(expr_y == num_skills_j[j] * (num_skills_j[j] - 1)/2);
+    //     expr_y.end();
 
-    }
+    // }
 
 
 
