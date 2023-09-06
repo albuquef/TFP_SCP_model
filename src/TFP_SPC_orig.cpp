@@ -414,7 +414,7 @@ runTests(string SEC_type){
                         // cplex.exportModel("TFP_SPC_model.lp");
                         
                         double cpu0, cpu1;
-                        cplex.setParam(IloCplex::TiLim, 3600); // time limit 2h
+                        cplex.setParam(IloCplex::TiLim, 3600); // time limit 1h
                         cplex.setParam(IloCplex::TreLim, 7000); // memory limit 7GB
                         cplex.setParam(IloCplex::WorkMem, 10000);
 

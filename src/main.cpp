@@ -33,9 +33,8 @@ int main(int argc, char** argv){
 
     string prob;
     int gclass,ctype;
-    const char* SEC; const char* METHOD; char* instType; char* gtype;
+    const char* SEC; const char* METHOD; char* instType; char* gtype; char* valid_ineq;
     int n;
-    bool valid_ineq;
     // Parameters parsing
     for (int i = 1; i < argc; ++i) {
         if (argv[i][0] == '-') {
@@ -56,7 +55,7 @@ int main(int argc, char** argv){
             } else if (strcmp(argv[i], "-gtype") == 0) {
                 gtype = argv[i + 1];
             } else if (strcmp(argv[i], "-validIneq") == 0) {
-                valid_ineq = stoi(argv[i + 1]);
+                valid_ineq = argv[i + 1];
             } else {
                 cerr << "Unknown parameter: " << argv[i] << endl;
                 exit(1);

@@ -10,7 +10,7 @@ double get_wall_time(){
     }
 }
 
-TFP_SCP_SIMP::TFP_SCP_SIMP(Reader *r, const Graph & Grph,const char* method_SPP, bool VALID_INEQ): rd(r), GRAPH(Grph){
+TFP_SCP_SIMP::TFP_SCP_SIMP(Reader *r, const Graph & Grph,const char* method_SPP, const char* VALID_INEQ): rd(r), GRAPH(Grph){
 // TFP_SCP_SIMP::TESTE(){
     
     getcwd(CURRENT_DIR, 500);
@@ -61,8 +61,9 @@ void TFP_SCP_SIMP::initModel(const char* method_SPP){
 
         createModel(model,x,y);
         cplex = IloCplex(model);
+        cplex.setParam(IloCplex::TiLim, 7200); // time limit 2h
         // cplex.setParam(IloCplex::TreLim, 30000); // tree memory limit 30GB
-        // cplex.setParam(IloCplex::WorkMem, 10); // memory limit 30GB
+
         exportILP(cplex,method_SPP);
 
     } catch (IloException& e) {
@@ -461,11 +462,21 @@ void TFP_SCP_SIMP::createModel(IloModel model, BoolVar3Matrix x, BoolVar3Matrix 
     cout << "[INFO] Adding Constraints "<< endl;
     constr_OneTeam(model, x); // max one team with one skill
     constr_MinSkill(model, x); // min skill s per team j
-    constr_LinY(model,x,y); // linearization y with x
     constr_Incomp(model,y); // negative edge incompatibility
+    
+    if(strcmp(VALID_INEQ,"IndepSet") == 0 || strcmp(VALID_INEQ,"all") == 0){
+        
+        constr_LinY_short(model,x,y); // linearization y with x SIMPLIFIED VI indep Set can do this
+        Valid_Inequalities_IndepSet(model,x,y); // Valid inequalities TFP (indep. set)
+        if(strcmp(VALID_INEQ,"all") == 0)
+            Valid_Inequalities_STeams(model,x,y); // Valid inequalities TFP (tati)
 
-    if(VALID_INEQ)
-        Valid_Inequalities(model,x,y); // Valid inequalities TFP
+    }else{
+
+        constr_LinY(model,x,y); // linearization y with x
+        if(strcmp(VALID_INEQ,"STeams") == 0)
+            Valid_Inequalities_STeams(model,x,y); // Valid inequalities TFP (tati)
+    }
 }
 
 void TFP_SCP_SIMP::objFunction (IloModel model, BoolVar3Matrix y){
@@ -544,6 +555,31 @@ void TFP_SCP_SIMP::constr_LinY(IloModel model, BoolVar3Matrix x, BoolVar3Matrix 
                     model.add(exprU + exprV - y[u][v][j] <= 1);
                     model.add(y[u][v][j]  <= exprU);
                     model.add(y[u][v][j] <= exprV);
+                    exprU.end(); exprV.end();
+                }
+            // }
+}
+
+void TFP_SCP_SIMP::constr_LinY_short(IloModel model, BoolVar3Matrix x, BoolVar3Matrix y){
+
+    IloEnv env = model.getEnv();
+
+    // set var y with x (linearization)
+    for (int u=0; u<rd->num_vertices; u++)
+        for (int v = u+1; v < rd->num_vertices; v++) // for all u,v: u<v
+            // if (rd->G[u][v] >= 0  && GRAPH.Graph_SPP[u][v]>0){
+                for (int j = 0; j <rd->num_teams; j++){
+                    IloExpr exprU(env);
+                    IloExpr exprV(env);
+                    for (int s = 0; s < rd->num_skills; s++) {
+                        if(rd->K[u][s] > 0 && rd->R[j][s] > 0) // individual u have skill s and team j need skill s
+                            exprU += x[u][j][s];
+                        if(rd->K[v][s] > 0 && rd->R[j][s] > 0)
+                            exprV += x[v][j][s];
+                    }
+                    model.add(exprU + exprV - y[u][v][j] <= 1);
+                    //////////////// model.add(y[u][v][j]  <= exprU);
+                    //////////////// model.add(y[u][v][j] <= exprV);
                     exprU.end(); exprV.end();
                 }
             // }
@@ -713,65 +749,162 @@ bool TFP_SCP_SIMP::isIntersection_Project_s(int u, int j, int s){
     return false;
 
 }
-void TFP_SCP_SIMP::Valid_Inequalities(IloModel model, BoolVar3Matrix x, BoolVar3Matrix y){
+void TFP_SCP_SIMP::Valid_Inequalities_STeams(IloModel model, BoolVar3Matrix x, BoolVar3Matrix y){
 
-    cout << "[INFO] Adding Valid Inequalities \n" << endl;
+    cout << "[INFO] Adding Valid Inequalities STeams " << endl;
 
     IloEnv env = model.getEnv();
-    // int u = 0;
+    // int u = 7;
     // int v = 1;
     // int j = 1;
     // int s = 0;
 
-
-    // model.add(x[5][1][7] == 1);
-    // model.add(x[19][1][7] == 1);
-
     for(int u=0;u<rd->num_vertices;u++)
         for(int j=0;j<rd->num_teams;j++)
             for(int s=0;s<rd->num_skills;s++)
-                if(rd->K[u][s]>0 && rd->R[j][s]>0){
+                if(rd->K[u][s]>0 && rd->R[j][s]>0){ // s in s(u) and s in s(j)
                     IloExpr expr1(env);
                     bool expr1_bool=false;
 
                     for(int v=0;v<rd->num_vertices;v++){ // not u<v but every v that can work with u (can be u > v) that means v \in B(u,j,s)
-                        if(rd->K[v][s]>0){
-                            if (u<v){
-                                if(isIntersection_s(u,v,s) && isIntersection_Project_s(u,j,s) && isIntersection_Project_s(v,j,s)){
-                                    if(rd->R[j][s] == 1){
-                                        model.add(y[u][v][j] == 0);
-                                    }else{
+                        if(rd->K[v][s]>0 && GRAPH.Graph_SPP[u][v]>0 ){ // s in s(v) && (u,v) in E'
+                                // s(u,j) dif {s} ou s(v,j) dif {s} ou t(j,s) >= 2
+                                if(!isIntersection_s(u,j,s) || !isIntersection_Project_s(v,j,s) || rd->R[j][s]>=2){
+                                    
+                                    if (u<v){
                                         expr1 += y[u][v][j];
                                         expr1_bool = true;
                                     }
-                                }
-                            }
-                            if (u>v){
-                                if(isIntersection_s(u,v,s) && isIntersection_Project_s(u,j,s) && isIntersection_Project_s(v,j,s)){
-                                    if(rd->R[j][s] == 1){
-                                        model.add(y[v][u][j] == 0);
-                                    }else{
+                                    if (u>v){
                                         expr1 += y[v][u][j];
                                         expr1_bool = true;
                                     }
+
                                 }
-                            }
+                                // need to test 
+                                // if(isIntersection_s(u,v,s) && isIntersection_s(u,j,s) && isIntersection_s(v,j,s) && rd->R[j][s]==1){
+                                //     if (u<v)
+                                //         model.add(y[u][v][j] == 0);
+                                //     if (u>v)
+                                //         model.add(y[v][u][j] == 0);
+                                // }
+                            
                         }       
                     }
                     
                     IloExpr expr2(env);
                     bool expr2_bool=false;
                     for(int s_out=0;s_out<rd->num_skills;s_out++){
-                        if(s != s_out && rd->K[u][s_out]>0 && rd->R[j][s_out]>=2){expr2 += rd->R[j][s]*x[u][j][s_out]; expr2_bool=true;}
+                        if(s != s_out && rd->K[u][s_out]>0){expr2 += rd->R[j][s]*x[u][j][s_out]; expr2_bool=true;}
                     }
 
                     // if(expr1_bool  && expr2_bool)
-                    if(expr1_bool && rd->R[j][s] >= 2)
+                    if(expr1_bool)
                         model.add(expr1 - (rd->R[j][s] - 1)*x[u][j][s] - expr2 >= 0);
 
                     expr1.end(); expr2.end();
                 
                 }
+
+
+}
+
+
+
+void TFP_SCP_SIMP::Valid_Inequalities_IndepSet(IloModel model, BoolVar3Matrix x, BoolVar3Matrix y){
+
+    cout << "[INFO] Adding Valid Inequalities IndepSet " << endl;
+
+    // S' = S
+
+    int num_skills_j[rd->num_teams]; // t(j,S)
+    for(int j=0;j<rd->num_teams;j++){
+        int cont=0;
+        for(int s=0;s<rd->num_skills;s++)
+            cont+=rd->R[j][s];
+        num_skills_j[j] = cont;
+    }
+
+    // for(int j=0;j<rd->num_teams;j++)
+    //     cout << num_skills_j[j] << " ";
+    // cout << "\n";
+
+    for(int u=0;u<rd->num_vertices;u++)
+        for(int j=0;j<rd->num_teams;j++){
+            IloExpr expr_y(env);
+            bool expr_y_bool=false;
+            
+            IloExpr expr_x(env);
+            bool expr_x_bool=false;
+            
+            for(int s=0;s<rd->num_skills;s++)
+                if(rd->K[u][s]>0 && rd->R[j][s]>0){ // s in s(u) and s in s(j)
+
+                    for(int v=0;v<rd->num_vertices;v++){ // not u<v but every v that can work with u (can be u > v) that means v \in B(u,j,s)
+                        if(rd->K[v][s]>0 && GRAPH.Graph_SPP[u][v]>0 ){ // s in s(v) && (u,v) in E'
+                                // s(u,j) dif {s} ou s(v,j) dif {s} ou t(j,s) >= 2
+                                if(!isIntersection_s(u,j,s) || !isIntersection_Project_s(v,j,s) || rd->R[j][s]>=2){
+                                    
+                                    if (u<v){
+                                        expr_y += y[u][v][j];
+                                        expr_y_bool = true;
+                                        
+                                    }
+                                    if (u>v){
+                                        expr_y += y[v][u][j];
+                                        expr_y_bool = true;
+                                    }
+
+                                }                            
+                        }       
+                    }
+
+                    expr_x += x[u][j][s];
+                    expr_x_bool = true;
+                }
+
+
+            // if(expr_y_bool && expr_x_bool)
+                // model.add(expr_y == (num_skills_j[j] - 1) * expr_x);
+
+            expr_x.end(); expr_y.end();
+        }
+
+    for(int j=0;j<rd->num_teams;j++){
+        
+        IloExpr expr_y(env);
+        bool expr_y_bool=false;
+
+        for(int u=0;u<rd->num_vertices;u++)
+            for(int s=0;s<rd->num_skills;s++)
+                if(rd->K[u][s]>0 && rd->R[j][s]>0){ // s in s(u) and s in s(j)
+
+                    for(int v=u+1;v<rd->num_vertices;v++){ // not u<v but every v that can work with u (can be u > v) that means v \in B(u,j,s)
+                        if(rd->K[v][s]>0 && GRAPH.Graph_SPP[u][v]>0 ){ // s in s(v) && (u,v) in E'
+                                // s(u,j) dif {s} ou s(v,j) dif {s} ou t(j,s) >= 2
+                                if(!isIntersection_s(u,j,s) || !isIntersection_Project_s(v,j,s) || rd->R[j][s]>=2){
+                                    
+                                    if (u<v){
+                                        expr_y += y[u][v][j];
+                                        expr_y_bool = true;
+                                    }
+                                    // if (u>v){
+                                    //     expr_y += y[v][u][j];
+                                    //     expr_y_bool = true;
+                                    // }
+
+                                }                            
+                        }       
+                    }
+
+                }
+
+        if(expr_y_bool)
+            model.add(expr_y == num_skills_j[j] * (num_skills_j[j] - 1)/2);
+        expr_y.end();
+
+    }
+
 
 
 }
@@ -861,10 +994,15 @@ void TFP_SCP_SIMP::saveResults(double timeTotal){
 
     char arq[1000];
     // sprintf(arq, "%s/results/%d_Vertices_2022-06-27_cycle_mtz.ods",CURRENT_DIR, rd->num_vertices);
+    // if (strcmp(rd->G_type,"directed") == 0)
+    //     sprintf(arq, "%s/results/result_%d_Vertices_directed_%d-%d-%d_TFP_SCP_SIMP_%s.ods",CURRENT_DIR, rd->num_vertices, current_year, current_month, current_day,method_SPP);
+    // else
+    //     sprintf(arq, "%s/results/result_%d_Vertices_%d-%d-%d_TFP_SCP_SIMP_%s.ods",CURRENT_DIR, rd->num_vertices, current_year, current_month, current_day,method_SPP);
+    
     if (strcmp(rd->G_type,"directed") == 0)
-        sprintf(arq, "%s/results/result_%d_Vertices_directed_%d-%d-%d_TFP_SCP_SIMP_%s.ods",CURRENT_DIR, rd->num_vertices, current_year, current_month, current_day,method_SPP);
+        sprintf(arq, "%s/results/result_%d_Vertices_directed_TFP_SCP_SIMP.ods",CURRENT_DIR, rd->num_vertices);
     else
-        sprintf(arq, "%s/results/result_%d_Vertices_%d-%d-%d_TFP_SCP_SIMP_%s.ods",CURRENT_DIR, rd->num_vertices, current_year, current_month, current_day,method_SPP);
+        sprintf(arq, "%s/results/result_%d_Vertices_TFP_SCP_SIMP.ods",CURRENT_DIR, rd->num_vertices);
     
 
 
@@ -875,11 +1013,13 @@ void TFP_SCP_SIMP::saveResults(double timeTotal){
     if(outputTable.is_open()){
 
         outputTable << rd->instanceG << ";"; // grafo instancia
+        outputTable << rd->G_type << ";"; // G type
         outputTable << rd->instanceKR << ";"; // KR instancia
         outputTable << rd->num_vertices << ";";   // numero de vertices
         outputTable << rd->num_skills << ";";   // qtd de hab
         outputTable << rd->num_teams << ";";   // qtd de proj
         outputTable << method_SPP << ";";   // metodo Shortest Positive Path
+        outputTable << VALID_INEQ <<  ";"; // valid ineq type
         outputTable << cplex.getStatus() << ";"; // Status cplex
         outputTable << cplex.getObjValue() << ";"; // valor fo
         outputTable << cplex.getNnodes() << ";"; // num nos
@@ -888,10 +1028,6 @@ void TFP_SCP_SIMP::saveResults(double timeTotal){
         outputTable << timeTFP <<  ";"; // tempo execucao tfp (felipe)
         outputTable << cplex.getTime() <<  ";"; // tempo execucao tfp (cplex)
         outputTable << timeTotal <<  ";"; // tempo execucao tfp (cplex)
-        if (VALID_INEQ)
-            outputTable << "VI" <<  ";"; // tempo execucao tfp (cplex)
-        else
-            outputTable << "NOT VI" <<  ";"; // tempo execucao tfp (cplex)
         outputTable << " \n ";
 
 
@@ -932,12 +1068,6 @@ void TFP_SCP_SIMP::solveILP(){
         // cout << "Solution status = " << cplex.getStatus()   << endl;
         // throw(-1);
     }
-    // else{
-        // cout << "--------------------------------------------------------" << end;
-        // cout << "Solution status = " << cplex.getStatus()   << endl;
-        // cout << "Solution value  = " << cplex.getObjValue() << endl;
-        // cout << "--------------------------------------------------------" << endl;
-    // }
     cpu1 = get_wall_time();
     this->timeTFP = cpu1 - cpu0; 
 }

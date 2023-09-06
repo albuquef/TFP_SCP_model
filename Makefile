@@ -97,7 +97,7 @@ GCLASS?= 1
 CTYPE?= 1
 INSTYPE?=random
 GTYPE?=undirected 
-VALID_INEQ?=0
+VALID_INEQ?=null
 
 test: main
 	$(SRCDIR)/main -prob $(PROB) -n $(NUM_VERT) -gclass $(GCLASS) -ctype $(CTYPE) -itype $(INSTYPE) -gtype $(GTYPE) -sec $(SEC) -method $(METHOD) -validIneq $(VALID_INEQ)

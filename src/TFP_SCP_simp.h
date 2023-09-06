@@ -27,7 +27,7 @@ typedef IloArray<NumVarMatrix> NumVar3Matrix;
 class TFP_SCP_SIMP{
 
 public:
-    TFP_SCP_SIMP(Reader *r, const Graph & Grph,const char* method_SPP, bool VALID_INEQ=false);
+    TFP_SCP_SIMP(Reader *r, const Graph & Grph,const char* method_SPP, const char* VALID_INEQ="null");
     ~TFP_SCP_SIMP();
     void exportILP      (IloCplex& cplex,const char* method_SPP);
     void solveILP       (void);
@@ -53,7 +53,7 @@ public:
     char CURRENT_DIR[500];
     int current_day, current_month, current_year;
     const char* method_SPP;
-    bool VALID_INEQ;
+    const char* VALID_INEQ;
     double timeTFP;
     double time_GraphSPP;
     
@@ -87,6 +87,9 @@ private:
     constr_LinY (IloModel model, BoolVar3Matrix x, BoolVar3Matrix y);
 
     void
+    constr_LinY_short (IloModel model, BoolVar3Matrix x, BoolVar3Matrix y);
+
+    void
     constr_Incomp (IloModel model, BoolVar3Matrix x); // u and v not comp
 
 
@@ -104,8 +107,9 @@ private:
     void constr_BreakCycle_SIGN_uv(IloModel model_SPP, BoolVarMatrix f, IloBoolVarArray mu, int u, int v);
 
     
-    void Valid_Inequalities(IloModel model, BoolVar3Matrix x, BoolVar3Matrix y);
+    void Valid_Inequalities_STeams(IloModel model, BoolVar3Matrix x, BoolVar3Matrix y);
 
+    void Valid_Inequalities_IndepSet(IloModel model, BoolVar3Matrix x, BoolVar3Matrix y);
 
 };
 
