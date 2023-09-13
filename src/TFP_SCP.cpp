@@ -569,6 +569,7 @@ void TFP_SCP::saveResults(double timeTotal){
         outputTable << rd->num_vertices << ";";   // numero de vertices
         outputTable << rd->num_skills << ";";   // qtd de hab
         outputTable << rd->num_teams << ";";   // qtd de proj
+        outputTable << typeSEC << ";"; // SEC method
         outputTable << cplex.getStatus() << ";"; // Status cplex
         outputTable << cplex.getObjValue() << ";"; // valor fo
         outputTable << cplex.getNnodes() << ";"; // num nos
@@ -582,8 +583,6 @@ void TFP_SCP::saveResults(double timeTotal){
     }
 
     outputTable.close();
-
-
 
 
 }
